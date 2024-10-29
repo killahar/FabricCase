@@ -1,26 +1,26 @@
 package org.example;
 
-import java.util.HashMap;
-import java.util.Map;
+import products.GenericProduct;
 
 public class ProductFactory {
 
-    private static final Map<String, Class<? extends Product>> productClasses = new HashMap<>();
-
-
-    public static void registerProduct(String productType, Class<? extends Product> productClass) {
-        productClasses.put(productType, productClass);
-    }
-
-    // Метод для создания экземпляра продукта
     public static Product createProduct(String productType, String name, double price) {
-        Class<? extends Product> productClass = productClasses.get(productType);
-        if (productClass == null) {
-            throw new IllegalArgumentException("Тип продукта не зарегистрирован: " + productType);
-        }
+        String className = "products." + productType;
+
         try {
-            return productClass.getDeclaredConstructor(String.class, double.class)
-                    .newInstance(name, price);
+            // Пытаемся загрузить указанный класс
+            Class<?> clazz = Class.forName(className);
+
+            if (Product.class.isAssignableFrom(clazz)) {
+                // Создаем экземпляр продукта, если класс найден
+                return (Product) clazz.getDeclaredConstructor(String.class, double.class)
+                        .newInstance(name, price);
+            } else {
+                throw new IllegalArgumentException("Класс " + productType + " не является продуктом");
+            }
+        } catch (ClassNotFoundException e) {
+            // Если класс не найден, возвращаем универсальный продукт
+            return new GenericProduct(productType, name, price);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Ошибка создания продукта: " + e.getMessage());
